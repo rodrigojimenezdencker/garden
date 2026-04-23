@@ -3,6 +3,7 @@ export interface Plant {
   name: string;
   species: string;
   photoUrl: string | null;
+  photoPath: string | null;
   zoneId: string | null;
   notes: string;
   wateringFrequencyDays: number;

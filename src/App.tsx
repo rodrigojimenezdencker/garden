@@ -1,13 +1,12 @@
-import { AppShell } from './components/layout/AppShell';
+import { RouterProvider } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { router } from './router';
 
 function App() {
   return (
-    <AppShell>
-      <div className="p-4">
-        <h1 className="text-2xl font-bold text-garden-800">Dashboard</h1>
-        <p className="text-garden-600">Bienvenido a Mi Jardín</p>
-      </div>
-    </AppShell>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   );
 }
 

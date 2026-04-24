@@ -1,6 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { BottomNav } from '../BottomNav';
+
+vi.mock('../../../hooks/useReminders', () => ({
+  useReminders: () => ({
+    reminders: [],
+    reminderCount: 0,
+    dismiss: vi.fn(),
+    hasUnacknowledged: false,
+  }),
+}));
 
 describe('BottomNav', () => {
   it('renders 5 navigation items', () => {

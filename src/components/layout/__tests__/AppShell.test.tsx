@@ -1,31 +1,47 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 import { AppShell } from '../AppShell';
+
+vi.mock('../../../hooks/useReminders', () => ({
+  useReminders: () => ({
+    reminders: [],
+    reminderCount: 0,
+    dismiss: vi.fn(),
+    hasUnacknowledged: false,
+  }),
+}));
 
 describe('AppShell', () => {
   it('renders children', () => {
     render(
-      <AppShell>
-        <div>Contenido de prueba</div>
-      </AppShell>,
+      <MemoryRouter>
+        <AppShell>
+          <div>Contenido de prueba</div>
+        </AppShell>
+      </MemoryRouter>,
     );
     expect(screen.getByText('Contenido de prueba')).toBeInTheDocument();
   });
 
   it('renders the header with app name', () => {
     render(
-      <AppShell>
-        <div>Contenido</div>
-      </AppShell>,
+      <MemoryRouter>
+        <AppShell>
+          <div>Contenido</div>
+        </AppShell>
+      </MemoryRouter>,
     );
     expect(screen.getByText(/Mi Jardín/i)).toBeInTheDocument();
   });
 
   it('renders bottom nav on mobile layout', () => {
     render(
-      <AppShell>
-        <div>Contenido</div>
-      </AppShell>,
+      <MemoryRouter>
+        <AppShell>
+          <div>Contenido</div>
+        </AppShell>
+      </MemoryRouter>,
     );
     expect(
       screen.getByRole('navigation', { name: /navegación principal/i }),
@@ -34,9 +50,11 @@ describe('AppShell', () => {
 
   it('renders sidebar for desktop layout', () => {
     render(
-      <AppShell>
-        <div>Contenido</div>
-      </AppShell>,
+      <MemoryRouter>
+        <AppShell>
+          <div>Contenido</div>
+        </AppShell>
+      </MemoryRouter>,
     );
     expect(
       screen.getByRole('navigation', { name: /navegación lateral/i }),

@@ -4,6 +4,8 @@ import { useWatering } from '../../hooks/useWatering';
 import type { Plant } from '../../types';
 import { CareType, type CareType as CareTypeValue } from '../../types/care';
 import { Button } from '../ui/Button';
+import { PhotoTimeline } from './PhotoTimeline';
+import { PlantInfoCard } from './PlantInfoCard';
 
 interface PlantDetailProps {
   plant: Plant;
@@ -277,30 +279,33 @@ export function PlantDetail({
           </div>
 
           {activeTab === 'info' ? (
-            <section className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border border-garden-100 bg-garden-50/70 p-4">
-                <h2 className="mb-2 font-semibold text-garden-900">Zona</h2>
-                <p className="text-gray-700">
-                  {plant.zoneId
-                    ? (zoneLabels[plant.zoneId] ?? plant.zoneId)
-                    : 'Sin asignar'}
-                </p>
+            <section className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-2xl border border-garden-100 bg-garden-50/70 p-4">
+                  <h2 className="mb-2 font-semibold text-garden-900">Zona</h2>
+                  <p className="text-gray-700">
+                    {plant.zoneId
+                      ? (zoneLabels[plant.zoneId] ?? plant.zoneId)
+                      : 'Sin asignar'}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-garden-100 bg-garden-50/70 p-4">
+                  <h2 className="mb-2 font-semibold text-garden-900">
+                    Frecuencia de riego
+                  </h2>
+                  <p className="text-gray-700">
+                    Cada {plant.wateringFrequencyDays} día
+                    {plant.wateringFrequencyDays === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-garden-100 bg-garden-50/70 p-4 md:col-span-3">
+                  <h2 className="mb-2 font-semibold text-garden-900">Notas</h2>
+                  <p className="whitespace-pre-wrap text-gray-700">
+                    {plant.notes || 'Sin notas todavía'}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-2xl border border-garden-100 bg-garden-50/70 p-4">
-                <h2 className="mb-2 font-semibold text-garden-900">
-                  Frecuencia de riego
-                </h2>
-                <p className="text-gray-700">
-                  Cada {plant.wateringFrequencyDays} día
-                  {plant.wateringFrequencyDays === 1 ? '' : 's'}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-garden-100 bg-garden-50/70 p-4 md:col-span-3">
-                <h2 className="mb-2 font-semibold text-garden-900">Notas</h2>
-                <p className="whitespace-pre-wrap text-gray-700">
-                  {plant.notes || 'Sin notas todavía'}
-                </p>
-              </div>
+              <PlantInfoCard plant={plant} />
             </section>
           ) : activeTab === 'watering' ? (
             wateringLoading ? (
@@ -537,6 +542,8 @@ export function PlantDetail({
                 </div>
               )}
             </section>
+          ) : activeTab === 'photos' ? (
+            <PhotoTimeline plantId={plant.id} />
           ) : (
             <div className="rounded-2xl border border-dashed border-garden-200 bg-garden-50/70 p-4 text-gray-700">
               Próximamente...

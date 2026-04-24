@@ -16,3 +16,11 @@ export type { WateringLog, WateringSchedule } from './watering';
 export type { WeatherForecast } from './weather';
 export { WeatherCondition } from './weather';
 export type { WeatherCondition as WeatherConditionValue } from './weather';
+export type {
+  CachedForecast,
+  GeocodingResponse,
+  GeocodingResult,
+  OpenMeteoDaily,
+  OpenMeteoForecastResponse,
+  UserCoordinates,
+} from './weather';

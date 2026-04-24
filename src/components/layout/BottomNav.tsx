@@ -1,3 +1,6 @@
+import { useReminders } from '../../hooks/useReminders';
+import { ReminderBadge } from '../ReminderBadge';
+
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '🌿' },
   { id: 'plantas', label: 'Plantas', icon: '🌱' },
@@ -11,6 +14,8 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ activeItem = 'dashboard' }: BottomNavProps) {
+  const { reminderCount } = useReminders();
+
   return (
     <nav
       aria-label="Navegación principal"
@@ -31,8 +36,11 @@ export function BottomNav({ activeItem = 'dashboard' }: BottomNavProps) {
             ].join(' ')}
             type="button"
           >
-            <span aria-hidden="true" className="text-xl leading-none">
-              {item.icon}
+            <span className="relative">
+              <span aria-hidden="true" className="text-xl leading-none">
+                {item.icon}
+              </span>
+              {item.id === 'riego' && <ReminderBadge count={reminderCount} />}
             </span>
             <span className={isActive ? 'font-semibold' : ''}>
               {item.label}

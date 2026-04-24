@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ReminderBanner } from '../ReminderBanner';
 import { BottomNav } from './BottomNav';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -20,6 +21,7 @@ export function AppShell({
         <Sidebar activeItem={activeItem} />
 
         <main className="min-w-0 flex-1 overflow-y-auto pb-16 md:pb-0">
+          <ReminderBanner />
           {children}
         </main>
       </div>

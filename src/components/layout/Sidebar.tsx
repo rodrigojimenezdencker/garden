@@ -1,3 +1,6 @@
+import { useReminders } from '../../hooks/useReminders';
+import { ReminderBadge } from '../ReminderBadge';
+
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '🌿' },
   { id: 'plantas', label: 'Plantas', icon: '🌱' },
@@ -11,6 +14,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeItem = 'dashboard' }: SidebarProps) {
+  const { reminderCount } = useReminders();
+
   return (
     <aside className="fixed bottom-0 top-14 hidden w-60 flex-shrink-0 overflow-y-auto border-r border-garden-100 bg-garden-50 md:block">
       <nav aria-label="Navegación lateral" className="px-3 py-4">
@@ -29,8 +34,13 @@ export function Sidebar({ activeItem = 'dashboard' }: SidebarProps) {
                   ].join(' ')}
                   type="button"
                 >
-                  <span aria-hidden="true" className="text-lg leading-none">
-                    {item.icon}
+                  <span className="relative">
+                    <span aria-hidden="true" className="text-lg leading-none">
+                      {item.icon}
+                    </span>
+                    {item.id === 'riego' && (
+                      <ReminderBadge count={reminderCount} />
+                    )}
                   </span>
                   {item.label}
                 </button>

@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import {
   Outlet,
   createBrowserRouter,
@@ -10,12 +11,17 @@ import { AppShell } from './components/layout/AppShell';
 import { PlantDetail } from './components/plant/PlantDetail';
 import { PlantForm } from './components/plant/PlantForm';
 import { usePlants } from './hooks/usePlants';
-import { Dashboard } from './pages/Dashboard';
-import { History } from './pages/History';
-import { Login } from './pages/Login';
-import { Plants } from './pages/Plants';
-import { Settings } from './pages/Settings';
-import { Watering } from './pages/Watering';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const History = lazy(() => import('./pages/History'));
+const Login = lazy(() => import('./pages/Login'));
+const Plants = lazy(() => import('./pages/Plants'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Watering = lazy(() => import('./pages/Watering'));
+
+function LoadingPage() {
+  return <div className="p-8 text-center text-garden-700">Cargando...</div>;
+}
 
 function getActiveItemFromPath(pathname: string): string {
   if (pathname.startsWith('/plants')) return 'plantas';
@@ -31,7 +37,9 @@ function ProtectedLayout() {
 
   return (
     <AppShell activeItem={activeItem}>
-      <Outlet />
+      <Suspense fallback={<LoadingPage />}>
+        <Outlet />
+      </Suspense>
     </AppShell>
   );
 }

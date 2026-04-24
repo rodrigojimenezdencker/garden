@@ -283,3 +283,5 @@ export function Watering() {
     </div>
   );
 }
+
+export default Watering;

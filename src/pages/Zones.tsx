@@ -372,3 +372,5 @@ export function Zones() {
     </div>
   );
 }
+
+export default Zones;

@@ -131,3 +131,5 @@ export function Plants() {
     </div>
   );
 }
+
+export default Plants;

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { InstallPrompt } from '../InstallPrompt';
 import { ReminderBanner } from '../ReminderBanner';
 import { BottomNav } from './BottomNav';
 import { Header } from './Header';
@@ -21,6 +22,7 @@ export function AppShell({
         <Sidebar activeItem={activeItem} />
 
         <main className="min-w-0 flex-1 overflow-y-auto pb-16 md:pb-0">
+          <InstallPrompt />
           <ReminderBanner />
           {children}
         </main>

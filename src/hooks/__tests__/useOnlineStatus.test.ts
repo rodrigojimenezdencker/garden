@@ -16,6 +16,7 @@ describe('useOnlineStatus', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('returns true when navigator.onLine is true', async () => {
@@ -25,6 +26,7 @@ describe('useOnlineStatus', () => {
     const { result } = renderHook(() => useOnlineStatus());
 
     expect(result.current.isOnline).toBe(true);
+    expect(result.current.syncStatus).toBe('synced');
   });
 
   it('updates to false when offline event fires', async () => {
@@ -37,9 +39,11 @@ describe('useOnlineStatus', () => {
     });
 
     expect(result.current.isOnline).toBe(false);
+    expect(result.current.syncStatus).toBe('offline');
   });
 
-  it('updates to true when online event fires', async () => {
+  it('transitions from syncing to synced when online event fires', async () => {
+    vi.useFakeTimers();
     setNavigatorOnlineStatus(false);
 
     const { useOnlineStatus } = await import('../useOnlineStatus');
@@ -51,6 +55,13 @@ describe('useOnlineStatus', () => {
     });
 
     expect(result.current.isOnline).toBe(true);
+    expect(result.current.syncStatus).toBe('syncing');
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(result.current.syncStatus).toBe('synced');
   });
 
   it('cleans up listeners on unmount', async () => {

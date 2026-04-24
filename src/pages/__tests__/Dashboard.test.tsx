@@ -278,7 +278,7 @@ describe('Dashboard page', () => {
 
     renderDashboard();
 
-    expect(screen.getByText('Preparando tu jardín...')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cargando dashboard')).toBeInTheDocument();
   });
 
   it('shows link to add plants when no plants exist', () => {

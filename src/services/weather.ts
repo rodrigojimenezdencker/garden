@@ -55,7 +55,8 @@ function getCachedForecast(lat: number, lng: number): WeatherForecast[] | null {
       ...f,
       date: new Date(f.date),
     }));
-  } catch {
+  } catch (_error: unknown) {
+    // Invalid cached JSON should fall back to a fresh fetch instead of breaking weather loading.
     return null;
   }
 }

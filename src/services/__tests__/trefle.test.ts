@@ -40,10 +40,103 @@ const MOCK_DETAILS_RESULT: TreflePlantDetails = {
 
 describe('trefle service', () => {
   const fetchMock = vi.fn();
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+  let indexedDbStore = new Map<string, unknown>();
+
+  function createRequest<T>(
+    executor: () => T,
+    shouldFail = false,
+  ): IDBRequest<T> {
+    const request = {
+      result: undefined,
+      error: shouldFail ? new Error('IndexedDB error') : null,
+      onsuccess: null,
+      onerror: null,
+    } as unknown as IDBRequest<T>;
+
+    queueMicrotask(() => {
+      if (shouldFail) {
+        request.onerror?.call(request, new Event('error'));
+        return;
+      }
+
+      (request as unknown as Record<string, unknown>).result = executor();
+      request.onsuccess?.call(request, new Event('success'));
+    });
+
+    return request;
+  }
+
+  function createTransaction(mode: IDBTransactionMode): IDBTransaction {
+    const transaction = {
+      error: null,
+      oncomplete: null,
+      onerror: null,
+      onabort: null,
+      objectStore: () => ({
+        get: (key: string) => createRequest(() => indexedDbStore.get(key)),
+        put: (value: unknown, key: string) => {
+          indexedDbStore.set(key, value);
+          return createRequest(() => undefined);
+        },
+        delete: (key: string) => {
+          indexedDbStore.delete(key);
+          return createRequest(() => undefined);
+        },
+      }),
+    } as unknown as IDBTransaction;
+
+    queueMicrotask(() => {
+      if (mode !== 'readonly') {
+        transaction.oncomplete?.call(transaction, new Event('complete'));
+      }
+    });
+
+    return transaction;
+  }
+
+  function createDatabase(): IDBDatabase {
+    return {
+      objectStoreNames: {
+        contains: () => true,
+      },
+      createObjectStore: () => ({}) as IDBObjectStore,
+      transaction: (_storeName: string, mode: IDBTransactionMode) =>
+        createTransaction(mode),
+    } as unknown as IDBDatabase;
+  }
+
+  function createOpenRequest(): IDBOpenDBRequest {
+    const database = createDatabase();
+    const request = {
+      result: database,
+      error: null,
+      onsuccess: null,
+      onerror: null,
+      onupgradeneeded: null,
+      onblocked: null,
+    } as unknown as IDBOpenDBRequest;
+
+    queueMicrotask(() => {
+      request.onupgradeneeded?.call(
+        request,
+        new Event('upgradeneeded') as unknown as IDBVersionChangeEvent,
+      );
+      request.onsuccess?.call(request, new Event('success'));
+    });
+
+    return request;
+  }
 
   beforeEach(() => {
+    vi.resetModules();
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.stubGlobal('fetch', fetchMock);
-    localStorage.clear();
+    indexedDbStore = new Map();
+    vi.stubGlobal('indexedDB', {
+      open: vi.fn(() => createOpenRequest()),
+    });
+    fetchMock.mockReset();
   });
 
   afterEach(() => {
@@ -85,11 +178,10 @@ describe('trefle service', () => {
 
       await searchPlants('lavender');
 
-      const expiredEntry = JSON.stringify({
+      indexedDbStore.set('search-lavender', {
         data: MOCK_SEARCH_RESULT,
         timestamp: Date.now() - 25 * 60 * 60 * 1000,
       });
-      localStorage.setItem('trefle-cache-search-lavender', expiredEntry);
 
       const result = await searchPlants('lavender');
 
@@ -111,6 +203,23 @@ describe('trefle service', () => {
       const result = await searchPlants('lavender');
 
       expect(result).toBeNull();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'No se pudo buscar plantas en Trefle',
+        expect.any(Error),
+      );
+    });
+
+    it('fetches without cache when IndexedDB is unavailable', async () => {
+      vi.stubGlobal('indexedDB', undefined);
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(MOCK_SEARCH_RESULT),
+      });
+
+      const result = await searchPlants('lavender');
+
+      expect(result).toEqual(MOCK_SEARCH_RESULT);
+      expect(fetchMock).toHaveBeenCalledOnce();
     });
   });
 
@@ -147,6 +256,10 @@ describe('trefle service', () => {
       const result = await getPlantDetails(1);
 
       expect(result).toBeNull();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'No se pudieron obtener los detalles de la planta en Trefle',
+        expect.any(Error),
+      );
     });
   });
 });

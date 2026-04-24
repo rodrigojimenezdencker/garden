@@ -7,7 +7,6 @@ const mockSubscribeToCollection = vi.fn();
 const mockAddDocument = vi.fn();
 const mockUpdateDocument = vi.fn();
 const mockDeleteDocument = vi.fn();
-const mockWhere = vi.fn();
 const mockUseAuthContext = vi.fn();
 const mockUsePlants = vi.fn();
 
@@ -17,10 +16,6 @@ vi.mock('../../contexts/AuthContext', () => ({
 
 vi.mock('../../hooks/usePlants', () => ({
   usePlants: () => mockUsePlants(),
-}));
-
-vi.mock('firebase/firestore', () => ({
-  where: (...args: unknown[]) => mockWhere(...args),
 }));
 
 vi.mock('../../services/firestore', () => ({
@@ -70,7 +65,6 @@ describe('useZones', () => {
         },
       ],
     });
-    mockWhere.mockReturnValue('where-created-by');
     mockSubscribeToCollection.mockImplementation(
       (
         _collection,
@@ -86,15 +80,14 @@ describe('useZones', () => {
     mockDeleteDocument.mockResolvedValue(undefined);
   });
 
-  it('subscribes to the user zones collection', async () => {
+  it('subscribes to the shared zones collection', async () => {
     const { result } = renderHook(() => useZones());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(mockWhere).toHaveBeenCalledWith('createdBy', '==', 'user-1');
     expect(mockSubscribeToCollection).toHaveBeenCalledWith(
       'zones',
-      ['where-created-by'],
+      [],
       expect.any(Function),
     );
     expect(result.current.zones.map((zone) => zone.id)).toEqual([
@@ -150,5 +143,51 @@ describe('useZones', () => {
     });
 
     expect(mockDeleteDocument).toHaveBeenCalledWith('zones', 'zone-2');
+  });
+
+  it('creates default zones on first empty load', async () => {
+    mockSubscribeToCollection.mockImplementationOnce(
+      (
+        _collection,
+        _constraints,
+        callback: (nextZones: typeof zones) => void,
+      ) => {
+        callback([]);
+        callback([]);
+        return vi.fn();
+      },
+    );
+
+    renderHook(() => useZones());
+
+    await waitFor(() => {
+      expect(mockAddDocument).toHaveBeenCalledTimes(5);
+    });
+
+    expect(mockAddDocument).toHaveBeenNthCalledWith(1, 'zones', {
+      name: 'Sol',
+      type: ZoneType.Sun,
+      createdBy: 'user-1',
+    });
+    expect(mockAddDocument).toHaveBeenNthCalledWith(2, 'zones', {
+      name: 'Sombra',
+      type: ZoneType.Shade,
+      createdBy: 'user-1',
+    });
+    expect(mockAddDocument).toHaveBeenNthCalledWith(3, 'zones', {
+      name: 'Terraza',
+      type: ZoneType.Terrace,
+      createdBy: 'user-1',
+    });
+    expect(mockAddDocument).toHaveBeenNthCalledWith(4, 'zones', {
+      name: 'Interior',
+      type: ZoneType.Indoor,
+      createdBy: 'user-1',
+    });
+    expect(mockAddDocument).toHaveBeenNthCalledWith(5, 'zones', {
+      name: 'Otra',
+      type: ZoneType.Other,
+      createdBy: 'user-1',
+    });
   });
 });

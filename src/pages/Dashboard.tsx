@@ -4,6 +4,7 @@ import { WeatherWidget } from '../components/WeatherWidget';
 import { RecentActivity } from '../components/dashboard/RecentActivity';
 import { SummaryCard } from '../components/dashboard/SummaryCard';
 import { Button } from '../components/ui/Button';
+import { Skeleton } from '../components/ui/Skeleton';
 import { useCareHistory } from '../hooks/useCareHistory';
 import { usePlants } from '../hooks/usePlants';
 import { useWatering } from '../hooks/useWatering';
@@ -62,9 +63,62 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="p-4 md:p-8">
-        <div className="rounded-[2rem] border border-garden-100 bg-white/85 p-8 text-center text-garden-700 shadow-sm backdrop-blur-sm">
-          Preparando tu jardín...
+      <div className="relative min-h-full p-4 md:p-8">
+        <div
+          aria-label="Cargando dashboard"
+          className="mx-auto max-w-6xl space-y-6"
+        >
+          <section className="rounded-[2rem] border border-garden-100 bg-white/88 p-6 shadow-sm backdrop-blur-sm md:p-8">
+            <Skeleton className="h-3 w-24 rounded-full" />
+            <Skeleton className="mt-4 h-10 w-48" />
+            <Skeleton className="mt-3 h-4 w-32" />
+          </section>
+
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {['a', 'b', 'c', 'd'].map((id) => (
+              <div
+                className="rounded-[1.75rem] border border-garden-100 bg-white/85 p-5 shadow-sm backdrop-blur-sm"
+                key={id}
+              >
+                <Skeleton className="h-5 w-10" />
+                <Skeleton className="mt-4 h-8 w-16" />
+                <Skeleton className="mt-3 h-4 w-28" />
+              </div>
+            ))}
+          </section>
+
+          <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+            <section className="space-y-4">
+              <Skeleton className="h-6 w-32" />
+              {['a', 'b', 'c'].map((id) => (
+                <div
+                  className="rounded-[1.75rem] border border-garden-100 bg-white/85 p-4 shadow-sm backdrop-blur-sm"
+                  key={id}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <Skeleton className="h-10 w-20 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </section>
+
+            <div className="space-y-6">
+              <section className="space-y-4 rounded-[2rem] border border-garden-100 bg-white/85 p-5 shadow-sm backdrop-blur-sm">
+                <Skeleton className="h-6 w-36" />
+                <Skeleton className="h-24 w-full rounded-2xl" />
+                <Skeleton className="h-24 w-full rounded-2xl" />
+              </section>
+
+              <section className="space-y-4 rounded-[2rem] border border-garden-100 bg-white/85 p-5 shadow-sm backdrop-blur-sm">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-28 w-full rounded-2xl" />
+              </section>
+            </div>
+          </div>
         </div>
       </div>
     );

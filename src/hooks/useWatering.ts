@@ -1,4 +1,3 @@
-import { where } from 'firebase/firestore';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { COLLECTIONS } from '../lib/constants';
@@ -9,6 +8,8 @@ import { usePlants } from './usePlants';
 interface UseWateringReturn {
   logs: WateringLog[];
   schedules: WateringSchedule[];
+  dueToday: WateringSchedule[];
+  dueThisWeek: WateringSchedule[];
   loading: boolean;
   logWatering: (plantId: string, notes?: string) => Promise<string>;
 }
@@ -48,7 +49,7 @@ export function useWatering(): UseWateringReturn {
 
     const unsubscribe = subscribeToCollection<WateringLog>(
       COLLECTIONS.WATERING_LOGS,
-      [where('loggedBy', '==', user.uid)],
+      [],
       (nextLogs) => {
         setLogs(
           [...nextLogs].sort(
@@ -91,6 +92,24 @@ export function useWatering(): UseWateringReturn {
     });
   }, [logs, plants]);
 
+  const dueToday = useMemo(() => {
+    return schedules.filter(
+      (schedule) =>
+        schedule.isOverdue ||
+        schedule.daysUntilNext === 0 ||
+        schedule.lastWateredAt === null,
+    );
+  }, [schedules]);
+
+  const dueThisWeek = useMemo(() => {
+    return schedules.filter(
+      (schedule) =>
+        schedule.daysUntilNext !== null &&
+        schedule.daysUntilNext >= 1 &&
+        schedule.daysUntilNext <= 7,
+    );
+  }, [schedules]);
+
   const logWatering = useCallback(
     async (plantId: string, notes?: string) => {
       if (!user) {
@@ -111,9 +130,19 @@ export function useWatering(): UseWateringReturn {
     () => ({
       logs,
       schedules,
+      dueToday,
+      dueThisWeek,
       loading: plantsLoading || logsLoading,
       logWatering,
     }),
-    [logs, schedules, plantsLoading, logsLoading, logWatering],
+    [
+      logs,
+      schedules,
+      dueToday,
+      dueThisWeek,
+      plantsLoading,
+      logsLoading,
+      logWatering,
+    ],
   );
 }

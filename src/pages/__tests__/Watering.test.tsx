@@ -48,6 +48,9 @@ const schedules = [
   },
 ];
 
+const dueToday = [schedules[0], schedules[1], schedules[2]];
+const dueThisWeek = [schedules[3]];
+
 function renderWatering() {
   render(
     <MemoryRouter>
@@ -64,6 +67,8 @@ describe('Watering page', () => {
     mockUseWatering.mockReturnValue({
       logs: [],
       schedules,
+      dueToday,
+      dueThisWeek,
       loading: false,
       logWatering: vi.fn().mockResolvedValue('new-log'),
     });
@@ -73,19 +78,23 @@ describe('Watering page', () => {
     vi.useRealTimers();
   });
 
-  it('renders the watering schedule and summary cards', () => {
+  it('renders the watering sections and summary cards', () => {
     renderWatering();
 
     expect(screen.getByText('Riego')).toBeInTheDocument();
     expect(screen.getByText('Pendientes hoy')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Hoy' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Esta semana' }),
+    ).toBeInTheDocument();
     expect(screen.getByText('Lavanda')).toBeInTheDocument();
     expect(screen.getByText('Menta')).toBeInTheDocument();
     expect(screen.getByText('Calathea')).toBeInTheDocument();
     expect(screen.getByText('Romero')).toBeInTheDocument();
     expect(screen.getByText('Atrasada')).toBeInTheDocument();
-    expect(screen.getByText('Hoy')).toBeInTheDocument();
+    expect(screen.getAllByText('Hoy').length).toBeGreaterThan(0);
     expect(screen.getByText('En 4 días')).toBeInTheDocument();
     expect(screen.getByText('Nunca regada — regar pronto')).toBeInTheDocument();
   });
@@ -96,6 +105,8 @@ describe('Watering page', () => {
     mockUseWatering.mockReturnValue({
       logs: [],
       schedules,
+      dueToday,
+      dueThisWeek,
       loading: false,
       logWatering,
     });
@@ -116,6 +127,8 @@ describe('Watering page', () => {
     mockUseWatering.mockReturnValue({
       logs: [],
       schedules: [],
+      dueToday: [],
+      dueThisWeek: [],
       loading: false,
       logWatering: vi.fn(),
     });

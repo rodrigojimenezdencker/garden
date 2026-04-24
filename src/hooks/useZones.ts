@@ -1,5 +1,4 @@
-import { where } from 'firebase/firestore';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { COLLECTIONS } from '../lib/constants';
 import {
@@ -8,7 +7,12 @@ import {
   subscribeToCollection,
   updateDocument,
 } from '../services/firestore';
-import type { GardenZone, Plant, ZoneType as ZoneTypeValue } from '../types';
+import {
+  type GardenZone,
+  type Plant,
+  ZoneType,
+  type ZoneType as ZoneTypeValue,
+} from '../types';
 import { usePlants } from './usePlants';
 
 type ZoneDocument = GardenZone & {
@@ -26,6 +30,14 @@ interface UseZonesReturn {
   deleteZone: (id: string) => Promise<void>;
 }
 
+const DEFAULT_ZONES: Array<{ name: string; type: ZoneTypeValue }> = [
+  { name: 'Sol', type: ZoneType.Sun },
+  { name: 'Sombra', type: ZoneType.Shade },
+  { name: 'Terraza', type: ZoneType.Terrace },
+  { name: 'Interior', type: ZoneType.Indoor },
+  { name: 'Otra', type: ZoneType.Other },
+];
+
 const getProtectedDeleteMessage = (count: number) => {
   return `Reasigna ${count} planta(s) antes de eliminar esta zona`;
 };
@@ -35,19 +47,22 @@ export function useZones(): UseZonesReturn {
   const { plants } = usePlants();
   const [zones, setZones] = useState<GardenZone[]>([]);
   const [loading, setLoading] = useState(true);
+  const defaultsInitializedRef = useRef(false);
 
   useEffect(() => {
     if (!user) {
       setZones([]);
       setLoading(false);
+      defaultsInitializedRef.current = false;
       return;
     }
 
     setLoading(true);
+    defaultsInitializedRef.current = false;
 
     const unsubscribe = subscribeToCollection<ZoneDocument>(
       COLLECTIONS.ZONES,
-      [where('createdBy', '==', user.uid)],
+      [],
       (nextZones) => {
         setZones(
           [...nextZones].sort((left, right) =>
@@ -55,6 +70,19 @@ export function useZones(): UseZonesReturn {
           ),
         );
         setLoading(false);
+
+        if (nextZones.length === 0 && !defaultsInitializedRef.current) {
+          defaultsInitializedRef.current = true;
+
+          void Promise.all(
+            DEFAULT_ZONES.map((zone) =>
+              addDocument<ZoneDocument>(COLLECTIONS.ZONES, {
+                ...zone,
+                createdBy: user.uid,
+              }),
+            ),
+          );
+        }
       },
     );
 

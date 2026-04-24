@@ -80,7 +80,11 @@ describe('History page', () => {
     mockUseCareHistory.mockReturnValue({
       events,
       loading: false,
+      hasMore: false,
+      loadingMore: false,
       addCareEvent: mockAddCareEvent,
+      deleteCareEvent: vi.fn(),
+      loadMore: vi.fn(),
       getEventsForPlant: vi.fn(),
     });
   });
@@ -134,7 +138,11 @@ describe('History page', () => {
     mockUseCareHistory.mockReturnValue({
       events: [],
       loading: false,
+      hasMore: false,
+      loadingMore: false,
       addCareEvent: mockAddCareEvent,
+      deleteCareEvent: vi.fn(),
+      loadMore: vi.fn(),
       getEventsForPlant: vi.fn(),
     });
 
@@ -143,5 +151,27 @@ describe('History page', () => {
     expect(
       screen.getByText('No hay registros de cuidados todavía.'),
     ).toBeInTheDocument();
+  });
+
+  it('shows and triggers the load more button when more events are available', async () => {
+    const user = userEvent.setup();
+    const loadMore = vi.fn().mockResolvedValue(undefined);
+
+    mockUseCareHistory.mockReturnValue({
+      events,
+      loading: false,
+      hasMore: true,
+      loadingMore: false,
+      addCareEvent: mockAddCareEvent,
+      deleteCareEvent: vi.fn(),
+      loadMore,
+      getEventsForPlant: vi.fn(),
+    });
+
+    render(<History />);
+
+    await user.click(screen.getByRole('button', { name: 'Cargar más' }));
+
+    expect(loadMore).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuthContext } from '../contexts/AuthContext';
+import { getDocument, updateDocument } from '../services/firestore';
 import {
   shouldSkipWatering as checkShouldSkipWatering,
   getWeatherForecast,
@@ -12,12 +14,19 @@ import type {
 
 const COORDINATES_KEY = 'garden-app:user-coordinates';
 
+interface StoredWeatherProfile {
+  locationLat: number | null;
+  locationLng: number | null;
+  weatherCityName?: string | null;
+}
+
 function getSavedCoordinates(): UserCoordinates | null {
   try {
     const raw = localStorage.getItem(COORDINATES_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as UserCoordinates;
-  } catch {
+  } catch (_error: unknown) {
+    // Invalid local cache should not block weather loading; we'll fall back to a fresh lookup.
     return null;
   }
 }
@@ -38,6 +47,7 @@ interface UseWeatherReturn {
 }
 
 export function useWeather(): UseWeatherReturn {
+  const { user } = useAuthContext();
   const [forecast, setForecast] = useState<WeatherForecast[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +56,71 @@ export function useWeather(): UseWeatherReturn {
   );
 
   const hasLocation = coordinates !== null;
+
+  useEffect(() => {
+    if (coordinates || !user?.uid) {
+      return;
+    }
+
+    let cancelled = false;
+
+    getDocument<StoredWeatherProfile>('users', user.uid)
+      .then((profile) => {
+        if (cancelled || !profile) {
+          return;
+        }
+
+        if (
+          typeof profile.locationLat !== 'number' ||
+          typeof profile.locationLng !== 'number'
+        ) {
+          return;
+        }
+
+        const nextCoordinates: UserCoordinates = {
+          latitude: profile.locationLat,
+          longitude: profile.locationLng,
+          cityName: profile.weatherCityName ?? undefined,
+        };
+
+        saveCoordinates(nextCoordinates);
+        setCoordinates(nextCoordinates);
+      })
+      .catch((fetchError: unknown) => {
+        console.warn(
+          'No se pudieron recuperar las coordenadas desde Firestore',
+          fetchError,
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [coordinates, user?.uid]);
+
+  const persistCoordinates = useCallback(
+    async (coords: UserCoordinates) => {
+      saveCoordinates(coords);
+
+      if (!user?.uid) {
+        return;
+      }
+
+      try {
+        await updateDocument<StoredWeatherProfile>('users', user.uid, {
+          locationLat: coords.latitude,
+          locationLng: coords.longitude,
+          weatherCityName: coords.cityName ?? null,
+        });
+      } catch (saveError: unknown) {
+        console.warn(
+          'No se pudieron guardar las coordenadas en Firestore',
+          saveError,
+        );
+      }
+    },
+    [user?.uid],
+  );
 
   useEffect(() => {
     if (!coordinates) return;
@@ -93,7 +168,7 @@ export function useWeather(): UseWeatherReturn {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           };
-          saveCoordinates(coords);
+          void persistCoordinates(coords);
           setCoordinates(coords);
           resolve();
         },
@@ -107,7 +182,7 @@ export function useWeather(): UseWeatherReturn {
         },
       );
     });
-  }, []);
+  }, [persistCoordinates]);
 
   const searchCities = useCallback(
     async (query: string): Promise<GeocodingResult[]> => {
@@ -116,15 +191,18 @@ export function useWeather(): UseWeatherReturn {
     [],
   );
 
-  const setLocationFromCity = useCallback((city: GeocodingResult) => {
-    const coords: UserCoordinates = {
-      latitude: city.latitude,
-      longitude: city.longitude,
-      cityName: city.name,
-    };
-    saveCoordinates(coords);
-    setCoordinates(coords);
-  }, []);
+  const setLocationFromCity = useCallback(
+    (city: GeocodingResult) => {
+      const coords: UserCoordinates = {
+        latitude: city.latitude,
+        longitude: city.longitude,
+        cityName: city.name,
+      };
+      void persistCoordinates(coords);
+      setCoordinates(coords);
+    },
+    [persistCoordinates],
+  );
 
   const skipWatering = useMemo(
     () => (forecast ? checkShouldSkipWatering(forecast) : false),

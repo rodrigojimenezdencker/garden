@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WateringSchedule } from '../../types';
 import { useReminders } from '../useReminders';
 
@@ -23,6 +23,11 @@ const makeSchedule = (
 });
 
 describe('useReminders', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.sessionStorage.clear();
+  });
+
   it('returns active reminders from schedules', () => {
     mockUseWatering.mockReturnValue({
       schedules: [
@@ -96,5 +101,48 @@ describe('useReminders', () => {
 
     expect(result.current.reminderCount).toBe(1);
     expect(result.current.hasUnacknowledged).toBe(false);
+  });
+
+  it('loads dismissed reminders from sessionStorage', () => {
+    window.sessionStorage.setItem(
+      'garden-app:dismissed-reminders',
+      JSON.stringify(['plant-1']),
+    );
+    mockUseWatering.mockReturnValue({
+      schedules: [
+        makeSchedule({
+          plantId: 'plant-1',
+          isOverdue: true,
+          daysUntilNext: -1,
+        }),
+      ],
+    });
+
+    const { result } = renderHook(() => useReminders());
+
+    expect(result.current.hasUnacknowledged).toBe(false);
+    expect(result.current.reminderCount).toBe(1);
+  });
+
+  it('persists dismissals in sessionStorage', () => {
+    mockUseWatering.mockReturnValue({
+      schedules: [
+        makeSchedule({
+          plantId: 'plant-1',
+          isOverdue: true,
+          daysUntilNext: -1,
+        }),
+      ],
+    });
+
+    const { result } = renderHook(() => useReminders());
+
+    act(() => {
+      result.current.dismiss('plant-1');
+    });
+
+    expect(
+      window.sessionStorage.getItem('garden-app:dismissed-reminders'),
+    ).toBe(JSON.stringify(['plant-1']));
   });
 });

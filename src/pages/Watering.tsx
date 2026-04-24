@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -75,37 +75,156 @@ const getSchedulePriority = ({
   return 3;
 };
 
+const sortSchedules = <
+  T extends {
+    isOverdue: boolean;
+    daysUntilNext: number | null;
+    lastWateredAt: Date | null;
+    plantName: string;
+  },
+>(
+  items: T[],
+) => {
+  return [...items].sort((left, right) => {
+    const priorityDifference =
+      getSchedulePriority(left) - getSchedulePriority(right);
+
+    if (priorityDifference !== 0) {
+      return priorityDifference;
+    }
+
+    const leftDays = left.daysUntilNext ?? Number.POSITIVE_INFINITY;
+    const rightDays = right.daysUntilNext ?? Number.POSITIVE_INFINITY;
+
+    if (leftDays !== rightDays) {
+      return leftDays - rightDays;
+    }
+
+    return left.plantName.localeCompare(right.plantName, 'es');
+  });
+};
+
+function WateringScheduleSection({
+  title,
+  schedules,
+  loggingPlantId,
+  successPlantId,
+  onLogWatering,
+}: {
+  title: string;
+  schedules: ReturnType<typeof useWatering>['schedules'];
+  loggingPlantId: string | null;
+  successPlantId: string | null;
+  onLogWatering: (plantId: string) => Promise<void>;
+}) {
+  if (schedules.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-2xl font-semibold text-garden-950">{title}</h2>
+      <div className="grid gap-4 xl:grid-cols-2">
+        {sortSchedules(schedules).map((schedule) => {
+          const badgeClassName =
+            schedule.lastWateredAt === null
+              ? 'bg-garden-100 text-garden-800'
+              : schedule.isOverdue
+                ? 'bg-red-100 text-red-700'
+                : schedule.daysUntilNext === 0
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-100 text-emerald-800';
+          const cardClassName =
+            schedule.lastWateredAt === null
+              ? 'border-garden-200 bg-linear-to-br from-white to-garden-50/80'
+              : schedule.isOverdue
+                ? 'border-red-200 bg-linear-to-br from-white to-red-50/80'
+                : schedule.daysUntilNext === 0
+                  ? 'border-amber-200 bg-linear-to-br from-white to-amber-50/80'
+                  : 'border-emerald-200 bg-linear-to-br from-white to-emerald-50/80';
+          const badgeLabel =
+            schedule.lastWateredAt === null
+              ? 'Nunca regada'
+              : schedule.isOverdue
+                ? 'Atrasada'
+                : schedule.daysUntilNext === 0
+                  ? 'Hoy'
+                  : `En ${schedule.daysUntilNext} día${schedule.daysUntilNext === 1 ? '' : 's'}`;
+
+          return (
+            <Card
+              className={`rounded-[2rem] border p-5 shadow-sm ${cardClassName}`}
+              key={schedule.plantId}
+            >
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-2xl font-semibold text-garden-950">
+                      {schedule.plantName}
+                    </h3>
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeClassName}`}
+                    >
+                      {badgeLabel}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p>
+                      <span className="font-medium text-garden-900">
+                        Último riego:{' '}
+                      </span>
+                      {schedule.lastWateredAt === null
+                        ? 'Nunca regada — regar pronto'
+                        : getRelativeWateringLabel(schedule.lastWateredAt)}
+                    </p>
+                    <p>
+                      <span className="font-medium text-garden-900">
+                        Próximo riego:{' '}
+                      </span>
+                      {schedule.nextWateringDate
+                        ? fullDateFormatter.format(schedule.nextWateringDate)
+                        : 'Aún sin fecha calculada'}
+                    </p>
+                    <p>
+                      <span className="font-medium text-garden-900">
+                        Ritmo:{' '}
+                      </span>
+                      Cada {schedule.frequencyDays} día
+                      {schedule.frequencyDays === 1 ? '' : 's'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-start gap-2 md:items-end">
+                  <Button
+                    loading={loggingPlantId === schedule.plantId}
+                    onClick={() => onLogWatering(schedule.plantId)}
+                  >
+                    Regar ahora
+                  </Button>
+                  {successPlantId === schedule.plantId ? (
+                    <p className="text-sm font-medium text-garden-700">
+                      ¡Riego guardado!
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function Watering() {
-  const { loading, logWatering, schedules } = useWatering();
+  const { loading, logWatering, schedules, dueToday, dueThisWeek } =
+    useWatering();
   const [loggingPlantId, setLoggingPlantId] = useState<string | null>(null);
   const [successPlantId, setSuccessPlantId] = useState<string | null>(null);
 
-  const sortedSchedules = useMemo(() => {
-    return [...schedules].sort((left, right) => {
-      const priorityDifference =
-        getSchedulePriority(left) - getSchedulePriority(right);
-
-      if (priorityDifference !== 0) {
-        return priorityDifference;
-      }
-
-      const leftDays = left.daysUntilNext ?? Number.POSITIVE_INFINITY;
-      const rightDays = right.daysUntilNext ?? Number.POSITIVE_INFINITY;
-
-      if (leftDays !== rightDays) {
-        return leftDays - rightDays;
-      }
-
-      return left.plantName.localeCompare(right.plantName, 'es');
-    });
-  }, [schedules]);
-
-  const pendingTodayCount = schedules.filter(
-    (schedule) =>
-      schedule.isOverdue ||
-      schedule.daysUntilNext === 0 ||
-      schedule.lastWateredAt === null,
-  ).length;
+  const pendingTodayCount = dueToday.length;
   const overdueCount = schedules.filter(
     (schedule) => schedule.isOverdue,
   ).length;
@@ -170,7 +289,7 @@ export function Watering() {
           </div>
         </section>
 
-        {sortedSchedules.length === 0 ? (
+        {schedules.length === 0 ? (
           <section className="rounded-[2rem] border border-dashed border-garden-200 bg-white/85 p-10 text-center shadow-sm backdrop-blur-sm">
             <div className="mx-auto flex h-18 w-18 items-center justify-center rounded-full bg-garden-100 text-4xl">
               💧
@@ -186,98 +305,22 @@ export function Watering() {
             </Link>
           </section>
         ) : (
-          <section className="grid gap-4 xl:grid-cols-2">
-            {sortedSchedules.map((schedule) => {
-              const badgeClassName =
-                schedule.lastWateredAt === null
-                  ? 'bg-garden-100 text-garden-800'
-                  : schedule.isOverdue
-                    ? 'bg-red-100 text-red-700'
-                    : schedule.daysUntilNext === 0
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-emerald-100 text-emerald-800';
-              const cardClassName =
-                schedule.lastWateredAt === null
-                  ? 'border-garden-200 bg-linear-to-br from-white to-garden-50/80'
-                  : schedule.isOverdue
-                    ? 'border-red-200 bg-linear-to-br from-white to-red-50/80'
-                    : schedule.daysUntilNext === 0
-                      ? 'border-amber-200 bg-linear-to-br from-white to-amber-50/80'
-                      : 'border-emerald-200 bg-linear-to-br from-white to-emerald-50/80';
-              const badgeLabel =
-                schedule.lastWateredAt === null
-                  ? 'Nunca regada'
-                  : schedule.isOverdue
-                    ? 'Atrasada'
-                    : schedule.daysUntilNext === 0
-                      ? 'Hoy'
-                      : `En ${schedule.daysUntilNext} día${schedule.daysUntilNext === 1 ? '' : 's'}`;
-
-              return (
-                <Card
-                  className={`rounded-[2rem] border p-5 shadow-sm ${cardClassName}`}
-                  key={schedule.plantId}
-                >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-2xl font-semibold text-garden-950">
-                          {schedule.plantName}
-                        </h2>
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeClassName}`}
-                        >
-                          {badgeLabel}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2 text-sm text-gray-700">
-                        <p>
-                          <span className="font-medium text-garden-900">
-                            Último riego:{' '}
-                          </span>
-                          {schedule.lastWateredAt === null
-                            ? 'Nunca regada — regar pronto'
-                            : getRelativeWateringLabel(schedule.lastWateredAt)}
-                        </p>
-                        <p>
-                          <span className="font-medium text-garden-900">
-                            Próximo riego:{' '}
-                          </span>
-                          {schedule.nextWateringDate
-                            ? fullDateFormatter.format(
-                                schedule.nextWateringDate,
-                              )
-                            : 'Aún sin fecha calculada'}
-                        </p>
-                        <p>
-                          <span className="font-medium text-garden-900">
-                            Ritmo:{' '}
-                          </span>
-                          Cada {schedule.frequencyDays} día
-                          {schedule.frequencyDays === 1 ? '' : 's'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-start gap-2 md:items-end">
-                      <Button
-                        loading={loggingPlantId === schedule.plantId}
-                        onClick={() => handleLogWatering(schedule.plantId)}
-                      >
-                        Regar ahora
-                      </Button>
-                      {successPlantId === schedule.plantId ? (
-                        <p className="text-sm font-medium text-garden-700">
-                          ¡Riego guardado!
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </section>
+          <div className="space-y-8">
+            <WateringScheduleSection
+              loggingPlantId={loggingPlantId}
+              onLogWatering={handleLogWatering}
+              schedules={dueToday}
+              successPlantId={successPlantId}
+              title="Hoy"
+            />
+            <WateringScheduleSection
+              loggingPlantId={loggingPlantId}
+              onLogWatering={handleLogWatering}
+              schedules={dueThisWeek}
+              successPlantId={successPlantId}
+              title="Esta semana"
+            />
+          </div>
         )}
       </div>
     </div>

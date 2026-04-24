@@ -18,6 +18,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Plants = lazy(() => import('./pages/Plants'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Watering = lazy(() => import('./pages/Watering'));
+const Zones = lazy(() => import('./pages/Zones'));
 
 function LoadingPage() {
   return <div className="p-8 text-center text-garden-700">Cargando...</div>;
@@ -27,6 +28,7 @@ function getActiveItemFromPath(pathname: string): string {
   if (pathname.startsWith('/plants')) return 'plantas';
   if (pathname.startsWith('/watering')) return 'riego';
   if (pathname.startsWith('/history')) return 'historial';
+  if (pathname.startsWith('/zones')) return 'zonas';
   if (pathname.startsWith('/settings')) return 'ajustes';
   return 'dashboard';
 }
@@ -136,6 +138,7 @@ export const router = createBrowserRouter(
             { path: 'plants/:id/edit', element: <EditPlantRoute /> },
             { path: 'watering', element: <Watering /> },
             { path: 'history', element: <History /> },
+            { path: 'zones', element: <Zones /> },
             { path: 'settings', element: <Settings /> },
           ],
         },

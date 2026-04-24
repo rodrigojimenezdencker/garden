@@ -3,6 +3,7 @@ import { Button } from './ui/Button';
 
 export const INSTALL_PROMPT_DISMISSED_KEY =
   'garden-app-install-prompt-dismissed';
+export const INSTALL_PROMPT_VISIT_COUNT_KEY = 'garden-app:visit-count';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -16,8 +17,21 @@ export function InstallPrompt() {
   const [installEvent, setInstallEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isDismissed, setIsDismissed] = useState(true);
+  const [canShowPrompt, setCanShowPrompt] = useState(false);
 
   useEffect(() => {
+    const visitCount = Number.parseInt(
+      window.localStorage.getItem(INSTALL_PROMPT_VISIT_COUNT_KEY) ?? '0',
+      10,
+    );
+    const nextVisitCount = Number.isNaN(visitCount) ? 1 : visitCount + 1;
+
+    window.localStorage.setItem(
+      INSTALL_PROMPT_VISIT_COUNT_KEY,
+      String(nextVisitCount),
+    );
+
+    setCanShowPrompt(nextVisitCount >= 2);
     setIsDismissed(
       window.localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === 'true',
     );
@@ -52,7 +66,7 @@ export function InstallPrompt() {
     setInstallEvent(null);
   };
 
-  if (isDismissed || !installEvent) {
+  if (isDismissed || !installEvent || !canShowPrompt) {
     return null;
   }
 

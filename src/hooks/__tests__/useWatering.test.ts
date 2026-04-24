@@ -4,7 +4,6 @@ import { useWatering } from '../useWatering';
 
 const mockSubscribeToCollection = vi.fn();
 const mockAddDocument = vi.fn();
-const mockWhere = vi.fn();
 const mockUseAuthContext = vi.fn();
 const mockUsePlants = vi.fn();
 
@@ -14,10 +13,6 @@ vi.mock('../../contexts/AuthContext', () => ({
 
 vi.mock('../../hooks/usePlants', () => ({
   usePlants: () => mockUsePlants(),
-}));
-
-vi.mock('firebase/firestore', () => ({
-  where: (...args: unknown[]) => mockWhere(...args),
 }));
 
 vi.mock('../../services/firestore', () => ({
@@ -131,7 +126,6 @@ describe('useWatering', () => {
       loading: false,
       getPlant: vi.fn(),
     });
-    mockWhere.mockReturnValue('where-logged-by');
     mockSubscribeToCollection.mockImplementation(
       (
         _collection,
@@ -154,10 +148,9 @@ describe('useWatering', () => {
 
     expect(result.current.loading).toBe(false);
 
-    expect(mockWhere).toHaveBeenCalledWith('loggedBy', '==', 'user-1');
     expect(mockSubscribeToCollection).toHaveBeenCalledWith(
       'wateringLogs',
-      ['where-logged-by'],
+      [],
       expect.any(Function),
     );
     expect(result.current.logs.map((log) => log.id)).toEqual([
@@ -205,6 +198,12 @@ describe('useWatering', () => {
         daysUntilNext: null,
       },
     ]);
+    expect(result.current.dueToday.map((schedule) => schedule.plantId)).toEqual(
+      ['plant-overdue', 'plant-today', 'plant-never'],
+    );
+    expect(
+      result.current.dueThisWeek.map((schedule) => schedule.plantId),
+    ).toEqual(['plant-upcoming']);
   });
 
   it('logs a watering event for the authenticated user', async () => {

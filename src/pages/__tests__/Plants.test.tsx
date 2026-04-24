@@ -91,4 +91,15 @@ describe('Plants page', () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it('shows skeleton cards while loading', () => {
+    mockUsePlants.mockReturnValue({
+      plants: [],
+      loading: true,
+    });
+
+    renderPlants();
+
+    expect(screen.getByLabelText('Cargando plantas')).toBeInTheDocument();
+  });
 });

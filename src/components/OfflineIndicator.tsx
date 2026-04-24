@@ -1,70 +1,77 @@
 import { useEffect, useRef, useState } from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
-const RECONNECT_BANNER_DURATION_MS = 3000;
+const SYNCED_BANNER_DURATION_MS = 3000;
 
 export function OfflineIndicator() {
-  const { isOnline } = useOnlineStatus();
-  const [showReconnectMessage, setShowReconnectMessage] = useState(false);
-  const wasOnlineRef = useRef(isOnline);
+  const { syncStatus } = useOnlineStatus();
+  const [showSyncedMessage, setShowSyncedMessage] = useState(false);
+  const previousStatusRef = useRef(syncStatus);
 
   useEffect(() => {
-    if (!isOnline) {
-      setShowReconnectMessage(false);
-      wasOnlineRef.current = false;
-      return;
-    }
-
-    if (!wasOnlineRef.current) {
-      setShowReconnectMessage(true);
-      wasOnlineRef.current = true;
-
+    if (syncStatus === 'synced' && previousStatusRef.current === 'syncing') {
+      setShowSyncedMessage(true);
       const timeoutId = window.setTimeout(() => {
-        setShowReconnectMessage(false);
-      }, RECONNECT_BANNER_DURATION_MS);
+        setShowSyncedMessage(false);
+      }, SYNCED_BANNER_DURATION_MS);
+
+      previousStatusRef.current = syncStatus;
 
       return () => {
         window.clearTimeout(timeoutId);
       };
     }
 
-    wasOnlineRef.current = true;
-  }, [isOnline]);
+    if (syncStatus !== 'synced') {
+      setShowSyncedMessage(false);
+    }
 
-  if (isOnline && !showReconnectMessage) {
+    previousStatusRef.current = syncStatus;
+  }, [syncStatus]);
+
+  if (syncStatus === 'synced' && !showSyncedMessage) {
     return null;
   }
 
-  const isReconnectState = isOnline && showReconnectMessage;
+  const bannerState =
+    syncStatus === 'offline'
+      ? 'offline'
+      : syncStatus === 'syncing'
+        ? 'syncing'
+        : 'synced';
 
   return (
     <output
       aria-live="polite"
       className={[
         'mx-4 mt-4 overflow-hidden rounded-2xl border px-4 py-3 shadow-sm transition-all duration-300 ease-out motion-safe:animate-[fade-in_300ms_ease-out]',
-        isReconnectState
-          ? 'border-garden-300 bg-garden-100 text-garden-900'
-          : 'border-amber-300 bg-amber-100 text-amber-950',
+        bannerState === 'offline'
+          ? 'border-amber-300 bg-amber-100 text-amber-950'
+          : 'border-garden-300 bg-garden-100 text-garden-900',
       ].join(' ')}
     >
       <p className="text-sm font-medium tracking-tight">
-        {isReconnectState
-          ? 'Conectado de nuevo ✓'
-          : 'Sin conexión — los cambios se guardarán cuando vuelvas a conectar'}
+        {bannerState === 'offline'
+          ? 'Sin conexión — los cambios se guardarán cuando vuelvas a conectar'
+          : bannerState === 'syncing'
+            ? 'Sincronizando...'
+            : 'Todo actualizado ✓'}
       </p>
       <div
         aria-hidden="true"
         className={[
           'mt-2 h-1 w-full overflow-hidden rounded-full bg-white/50',
-          isReconnectState ? 'opacity-100' : 'opacity-70',
+          bannerState === 'offline' ? 'opacity-70' : 'opacity-100',
         ].join(' ')}
       >
         <div
           className={[
             'h-full rounded-full transition-all duration-500',
-            isReconnectState
-              ? 'w-full bg-garden-500 motion-safe:animate-[reconnect-sheen_900ms_ease-out]'
-              : 'w-1/3 bg-amber-500',
+            bannerState === 'offline'
+              ? 'w-1/3 bg-amber-500'
+              : bannerState === 'syncing'
+                ? 'w-full bg-garden-500 motion-safe:animate-pulse'
+                : 'w-full bg-garden-500 motion-safe:animate-[reconnect-sheen_900ms_ease-out]',
           ].join(' ')}
         />
       </div>

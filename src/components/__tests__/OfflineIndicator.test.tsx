@@ -15,7 +15,10 @@ describe('OfflineIndicator', () => {
   });
 
   it('renders nothing when online', () => {
-    mockUseOnlineStatus.mockReturnValue({ isOnline: true });
+    mockUseOnlineStatus.mockReturnValue({
+      isOnline: true,
+      syncStatus: 'synced',
+    });
 
     const { container } = render(<OfflineIndicator />);
 
@@ -23,7 +26,10 @@ describe('OfflineIndicator', () => {
   });
 
   it('shows offline message when offline', () => {
-    mockUseOnlineStatus.mockReturnValue({ isOnline: false });
+    mockUseOnlineStatus.mockReturnValue({
+      isOnline: false,
+      syncStatus: 'offline',
+    });
 
     render(<OfflineIndicator />);
 
@@ -34,21 +40,44 @@ describe('OfflineIndicator', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows reconnect message when going back online', () => {
+  it('shows syncing state while reconnecting', () => {
+    mockUseOnlineStatus.mockReturnValue({
+      isOnline: true,
+      syncStatus: 'syncing',
+    });
+
+    render(<OfflineIndicator />);
+
+    expect(screen.getByText('Sincronizando...')).toBeInTheDocument();
+  });
+
+  it('shows synced message after syncing completes', () => {
     vi.useFakeTimers();
-    mockUseOnlineStatus.mockReturnValue({ isOnline: false });
+    mockUseOnlineStatus.mockReturnValue({
+      isOnline: false,
+      syncStatus: 'offline',
+    });
 
     const { rerender } = render(<OfflineIndicator />);
 
-    mockUseOnlineStatus.mockReturnValue({ isOnline: true });
+    mockUseOnlineStatus.mockReturnValue({
+      isOnline: true,
+      syncStatus: 'syncing',
+    });
     rerender(<OfflineIndicator />);
 
-    expect(screen.getByText('Conectado de nuevo ✓')).toBeInTheDocument();
+    mockUseOnlineStatus.mockReturnValue({
+      isOnline: true,
+      syncStatus: 'synced',
+    });
+    rerender(<OfflineIndicator />);
+
+    expect(screen.getByText('Todo actualizado ✓')).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(3000);
     });
 
-    expect(screen.queryByText('Conectado de nuevo ✓')).not.toBeInTheDocument();
+    expect(screen.queryByText('Todo actualizado ✓')).not.toBeInTheDocument();
   });
 });

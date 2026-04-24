@@ -1,8 +1,8 @@
-# React + TypeScript + Vite
+# Mi Jardin 🌱
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Deploy to GitHub Pages](https://github.com/rodri/garden-app/actions/workflows/deploy.yml/badge.svg)](https://github.com/rodri/garden-app/actions/workflows/deploy.yml)
 
-Currently, two official plugins are available:
+Family garden management PWA built with React + TypeScript + Vite + Firebase.
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)

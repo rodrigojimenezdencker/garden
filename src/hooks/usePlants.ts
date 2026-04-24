@@ -1,4 +1,3 @@
-import { where } from 'firebase/firestore';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { COLLECTIONS, STORAGE_PATHS } from '../lib/constants';
@@ -79,7 +78,7 @@ export function usePlants(): UsePlantsReturn {
 
     const unsubscribe = subscribeToCollection<Plant>(
       COLLECTIONS.PLANTS,
-      [where('createdBy', '==', user.uid)],
+      [],
       (nextPlants) => {
         setPlants(
           [...nextPlants].sort((left, right) =>

@@ -48,16 +48,20 @@ export function LocationPermission({ onClose }: LocationPermissionProps) {
 
       if (value.trim().length < 2) {
         setResults([]);
+        setError(null);
         return;
       }
 
       debounceRef.current = setTimeout(async () => {
         setSearching(true);
+        setError(null);
         try {
           const cities = await searchCities(value);
           setResults(cities);
-        } catch {
+        } catch (error: unknown) {
+          console.warn('No se pudo buscar la ciudad', error);
           setResults([]);
+          setError('No se pudo buscar ciudades en este momento');
         } finally {
           setSearching(false);
         }
@@ -147,6 +151,8 @@ export function LocationPermission({ onClose }: LocationPermissionProps) {
               onChange={(e) => handleSearch(e.target.value)}
               autoFocus
             />
+
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
             {searching && <p className="text-sm text-gray-500">Buscando...</p>}
 

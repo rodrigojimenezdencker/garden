@@ -114,7 +114,8 @@ function TimelineItem({
 
 export function History() {
   const { plants, loading: loadingPlants } = usePlants();
-  const { events, loading, addCareEvent } = useCareHistory();
+  const { events, loading, addCareEvent, hasMore, loadingMore, loadMore } =
+    useCareHistory();
   const [typeFilter, setTypeFilter] = useState<CareTypeFilter>('all');
   const [plantFilter, setPlantFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -259,15 +260,29 @@ export function History() {
             </p>
           </div>
         ) : (
-          <ol className="space-y-4">
-            {filteredEvents.map((event) => (
-              <TimelineItem
-                event={event}
-                key={event.id}
-                plantName={getPlantName(event.plantId, plants)}
-              />
-            ))}
-          </ol>
+          <div className="space-y-4">
+            <ol className="space-y-4">
+              {filteredEvents.map((event) => (
+                <TimelineItem
+                  event={event}
+                  key={event.id}
+                  plantName={getPlantName(event.plantId, plants)}
+                />
+              ))}
+            </ol>
+
+            {hasMore ? (
+              <div className="flex justify-center">
+                <Button
+                  disabled={loadingMore}
+                  loading={loadingMore}
+                  onClick={loadMore}
+                >
+                  Cargar más
+                </Button>
+              </div>
+            ) : null}
+          </div>
         )}
       </div>
 

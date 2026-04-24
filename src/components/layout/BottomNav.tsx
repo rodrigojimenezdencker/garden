@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { id: 'plantas', label: 'Plantas', icon: '🌱' },
   { id: 'riego', label: 'Riego', icon: '💧' },
   { id: 'historial', label: 'Historial', icon: '📋' },
+  { id: 'zonas', label: 'Zonas', icon: '📍' },
   { id: 'ajustes', label: 'Ajustes', icon: '⚙️' },
 ] as const;
 

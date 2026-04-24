@@ -8,15 +8,10 @@ const mockUpdateDocument = vi.fn();
 const mockDeleteDocument = vi.fn();
 const mockUploadPhoto = vi.fn();
 const mockDeletePhoto = vi.fn();
-const mockWhere = vi.fn();
 const mockUseAuthContext = vi.fn();
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuthContext: () => mockUseAuthContext(),
-}));
-
-vi.mock('firebase/firestore', () => ({
-  where: (...args: unknown[]) => mockWhere(...args),
 }));
 
 vi.mock('../../services/firestore', () => ({
@@ -53,7 +48,6 @@ describe('usePlants', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseAuthContext.mockReturnValue({ user: { uid: 'user-1' } });
-    mockWhere.mockReturnValue('where-created-by');
     mockSubscribeToCollection.mockImplementation(
       (
         _collection,
@@ -72,15 +66,14 @@ describe('usePlants', () => {
     vi.spyOn(Date, 'now').mockReturnValue(now.getTime());
   });
 
-  it('subscribes to the user plants collection', async () => {
+  it('subscribes to the shared plants collection', async () => {
     const { result } = renderHook(() => usePlants());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(mockWhere).toHaveBeenCalledWith('createdBy', '==', 'user-1');
     expect(mockSubscribeToCollection).toHaveBeenCalledWith(
       'plants',
-      ['where-created-by'],
+      [],
       expect.any(Function),
     );
     expect(result.current.plants).toEqual([plant]);

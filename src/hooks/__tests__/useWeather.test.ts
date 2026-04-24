@@ -4,12 +4,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mockGetWeatherForecast = vi.fn();
 const mockShouldSkipWatering = vi.fn();
 const mockSearchCities = vi.fn();
+const mockGetDocument = vi.fn();
+const mockUpdateDocument = vi.fn();
+const mockUseAuthContext = vi.fn();
 
 vi.mock('../../services/weather', () => ({
   getWeatherForecast: (...args: unknown[]) => mockGetWeatherForecast(...args),
   shouldSkipWatering: (...args: unknown[]) => mockShouldSkipWatering(...args),
   searchCities: (...args: unknown[]) => mockSearchCities(...args),
   weatherCodeToEmoji: () => '☀️',
+}));
+
+vi.mock('../../services/firestore', () => ({
+  getDocument: (...args: unknown[]) => mockGetDocument(...args),
+  updateDocument: (...args: unknown[]) => mockUpdateDocument(...args),
+}));
+
+vi.mock('../../contexts/AuthContext', () => ({
+  useAuthContext: () => mockUseAuthContext(),
 }));
 
 const mockLocalStorage = (() => {
@@ -59,9 +71,15 @@ describe('useWeather', () => {
     mockGetWeatherForecast.mockReset();
     mockShouldSkipWatering.mockReset();
     mockSearchCities.mockReset();
+    mockGetDocument.mockReset();
+    mockUpdateDocument.mockReset();
+    mockUseAuthContext.mockReset();
     mockGeolocation.getCurrentPosition.mockReset();
     mockLocalStorage.clear();
     mockShouldSkipWatering.mockReturnValue(false);
+    mockGetDocument.mockResolvedValue(null);
+    mockUpdateDocument.mockResolvedValue(undefined);
+    mockUseAuthContext.mockReturnValue({ user: null });
   });
 
   afterEach(() => {
@@ -99,6 +117,7 @@ describe('useWeather', () => {
   });
 
   it('requestLocation saves coordinates and fetches forecast', async () => {
+    mockUseAuthContext.mockReturnValue({ user: { uid: 'user-1' } });
     mockGetWeatherForecast.mockResolvedValue(mockForecasts);
     mockGeolocation.getCurrentPosition.mockImplementation(
       (success: PositionCallback) => {
@@ -119,6 +138,11 @@ describe('useWeather', () => {
       'garden-app:user-coordinates',
       expect.stringContaining('-34.6'),
     );
+    expect(mockUpdateDocument).toHaveBeenCalledWith('users', 'user-1', {
+      locationLat: -34.6,
+      locationLng: -58.4,
+      weatherCityName: null,
+    });
 
     await waitFor(() => {
       expect(result.current.forecast).toEqual(mockForecasts);
@@ -182,6 +206,7 @@ describe('useWeather', () => {
   });
 
   it('setLocationFromCity saves city and triggers forecast', async () => {
+    mockUseAuthContext.mockReturnValue({ user: { uid: 'user-1' } });
     mockGetWeatherForecast.mockResolvedValue(mockForecasts);
 
     const { useWeather } = await import('../useWeather');
@@ -201,10 +226,42 @@ describe('useWeather', () => {
       'garden-app:user-coordinates',
       expect.stringContaining('Buenos Aires'),
     );
+    expect(mockUpdateDocument).toHaveBeenCalledWith('users', 'user-1', {
+      locationLat: -34.6,
+      locationLng: -58.4,
+      weatherCityName: 'Buenos Aires',
+    });
 
     await waitFor(() => {
       expect(result.current.forecast).toEqual(mockForecasts);
     });
+  });
+
+  it('loads coordinates from Firestore when localStorage is empty', async () => {
+    mockUseAuthContext.mockReturnValue({ user: { uid: 'user-1' } });
+    mockGetDocument.mockResolvedValue({
+      locationLat: -31.4,
+      locationLng: -64.2,
+      weatherCityName: 'Córdoba',
+    });
+    mockGetWeatherForecast.mockResolvedValue(mockForecasts);
+
+    const { useWeather } = await import('../useWeather');
+    const { result } = renderHook(() => useWeather());
+
+    await waitFor(() => {
+      expect(mockGetDocument).toHaveBeenCalledWith('users', 'user-1');
+    });
+
+    await waitFor(() => {
+      expect(result.current.hasLocation).toBe(true);
+    });
+
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      'garden-app:user-coordinates',
+      expect.stringContaining('Córdoba'),
+    );
+    expect(mockGetWeatherForecast).toHaveBeenCalledWith(-31.4, -64.2);
   });
 
   it('searchCities delegates to service', async () => {

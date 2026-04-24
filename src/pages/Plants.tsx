@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PlantCard } from '../components/plant/PlantCard';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { Skeleton } from '../components/ui/Skeleton';
 import { usePlants } from '../hooks/usePlants';
 
 type ViewMode = 'grid' | 'list';
@@ -85,8 +86,20 @@ export function Plants() {
         </div>
 
         {loading ? (
-          <div className="rounded-[2rem] border border-garden-100 bg-white/80 p-8 text-center text-garden-700 shadow-sm backdrop-blur-sm">
-            Cargando plantas...
+          <div aria-label="Cargando plantas" className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+              {['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((id) => (
+                <div
+                  className="rounded-[2rem] border border-garden-100 bg-white/80 p-4 shadow-sm backdrop-blur-sm"
+                  key={id}
+                >
+                  <Skeleton className="h-36 w-full rounded-[1.5rem]" />
+                  <Skeleton className="mt-4 h-5 w-24" />
+                  <Skeleton className="mt-2 h-4 w-32" />
+                  <Skeleton className="mt-4 h-9 w-full rounded-full" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : plants.length === 0 ? (
           <div className="rounded-[2rem] border border-dashed border-garden-200 bg-white/80 p-10 text-center shadow-sm backdrop-blur-sm">

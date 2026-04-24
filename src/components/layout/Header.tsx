@@ -1,9 +1,14 @@
+import { SyncStatus } from '../SyncStatus';
+
 export function Header() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between bg-garden-700 px-4 shadow-md">
-      <span className="text-lg font-bold tracking-tight text-white">
-        Mi Jardín 🌱
-      </span>
+      <div className="flex items-center gap-3">
+        <span className="text-lg font-bold tracking-tight text-white">
+          Mi Jardín 🌱
+        </span>
+        <SyncStatus />
+      </div>
 
       <div
         aria-label="Perfil de usuario"

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { InstallPrompt } from '../InstallPrompt';
+import { OfflineIndicator } from '../OfflineIndicator';
 import { ReminderBanner } from '../ReminderBanner';
 import { BottomNav } from './BottomNav';
 import { Header } from './Header';
@@ -23,6 +24,7 @@ export function AppShell({
 
         <main className="min-w-0 flex-1 overflow-y-auto pb-16 md:pb-0">
           <InstallPrompt />
+          <OfflineIndicator />
           <ReminderBanner />
           {children}
         </main>

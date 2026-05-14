@@ -145,5 +145,5 @@ export const router = createBrowserRouter(
       ],
     },
   ],
-  { basename: '/garden-app' },
+  { basename: '/garden' },
 );

@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base: '/garden-app/',
+  base: '/garden/',
   plugins: [
     react(),
     tailwindcss(),
@@ -13,24 +13,24 @@ export default defineConfig({
       includeAssets: ['icon-192.svg', 'icon-512.svg'],
       injectRegister: 'auto',
       registerType: 'autoUpdate',
-      scope: '/garden-app/',
+      scope: '/garden/',
       manifest: {
         name: 'Mi Jardín',
         short_name: 'Jardín',
         theme_color: '#16a34a',
         background_color: '#ffffff',
         display: 'standalone',
-        start_url: '/garden-app/',
-        scope: '/garden-app/',
+        start_url: '/garden/',
+        scope: '/garden/',
         icons: [
           {
-            src: '/garden-app/icon-192.svg',
+            src: '/garden/icon-192.svg',
             sizes: '192x192',
             type: 'image/svg+xml',
             purpose: 'any maskable',
           },
           {
-            src: '/garden-app/icon-512.svg',
+            src: '/garden/icon-512.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable',
@@ -40,7 +40,7 @@ export default defineConfig({
       workbox: {
         cacheId: 'garden-app',
         globPatterns: ['**/*.{css,html,js,svg}'],
-        navigateFallback: '/garden-app/index.html',
+        navigateFallback: '/garden/index.html',
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,

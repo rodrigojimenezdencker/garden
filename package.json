@@ -20,6 +20,14 @@
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "@firebase/util",
+      "esbuild",
+      "protobufjs"
+    ]
+  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@playwright/test": "^1.59.1",

@@ -1,13 +1,14 @@
+import { useNavigate } from 'react-router-dom';
 import { useReminders } from '../../hooks/useReminders';
 import { ReminderBadge } from '../ReminderBadge';
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: '🌿' },
-  { id: 'plantas', label: 'Plantas', icon: '🌱' },
-  { id: 'riego', label: 'Riego', icon: '💧' },
-  { id: 'historial', label: 'Historial', icon: '📋' },
-  { id: 'zonas', label: 'Zonas', icon: '📍' },
-  { id: 'ajustes', label: 'Ajustes', icon: '⚙️' },
+  { id: 'dashboard', label: 'Dashboard', icon: '🌿', path: '/' },
+  { id: 'plantas', label: 'Plantas', icon: '🌱', path: '/plants' },
+  { id: 'riego', label: 'Riego', icon: '💧', path: '/watering' },
+  { id: 'historial', label: 'Historial', icon: '📋', path: '/history' },
+  { id: 'zonas', label: 'Zonas', icon: '📍', path: '/zones' },
+  { id: 'ajustes', label: 'Ajustes', icon: '⚙️', path: '/settings' },
 ] as const;
 
 interface BottomNavProps {
@@ -16,6 +17,7 @@ interface BottomNavProps {
 
 export function BottomNav({ activeItem = 'dashboard' }: BottomNavProps) {
   const { reminderCount } = useReminders();
+  const navigate = useNavigate();
 
   return (
     <nav
@@ -35,6 +37,7 @@ export function BottomNav({ activeItem = 'dashboard' }: BottomNavProps) {
                 ? 'text-garden-500'
                 : 'text-gray-500 hover:text-garden-500',
             ].join(' ')}
+            onClick={() => navigate(item.path)}
             type="button"
           >
             <span className="relative">

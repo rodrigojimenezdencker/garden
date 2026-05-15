@@ -1,13 +1,14 @@
+import { useNavigate } from 'react-router-dom';
 import { useReminders } from '../../hooks/useReminders';
 import { ReminderBadge } from '../ReminderBadge';
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: '🌿' },
-  { id: 'plantas', label: 'Plantas', icon: '🌱' },
-  { id: 'riego', label: 'Riego', icon: '💧' },
-  { id: 'historial', label: 'Historial', icon: '📋' },
-  { id: 'zonas', label: 'Zonas', icon: '📍' },
-  { id: 'ajustes', label: 'Ajustes', icon: '⚙️' },
+  { id: 'dashboard', label: 'Dashboard', icon: '🌿', path: '/' },
+  { id: 'plantas', label: 'Plantas', icon: '🌱', path: '/plants' },
+  { id: 'riego', label: 'Riego', icon: '💧', path: '/watering' },
+  { id: 'historial', label: 'Historial', icon: '📋', path: '/history' },
+  { id: 'zonas', label: 'Zonas', icon: '📍', path: '/zones' },
+  { id: 'ajustes', label: 'Ajustes', icon: '⚙️', path: '/settings' },
 ] as const;
 
 interface SidebarProps {
@@ -16,6 +17,7 @@ interface SidebarProps {
 
 export function Sidebar({ activeItem = 'dashboard' }: SidebarProps) {
   const { reminderCount } = useReminders();
+  const navigate = useNavigate();
 
   return (
     <aside className="fixed bottom-0 top-14 hidden w-60 flex-shrink-0 overflow-y-auto border-r border-garden-100 bg-garden-50 md:block">
@@ -33,6 +35,7 @@ export function Sidebar({ activeItem = 'dashboard' }: SidebarProps) {
                       ? 'bg-garden-100 text-garden-700'
                       : 'text-gray-600 hover:bg-garden-100 hover:text-garden-700',
                   ].join(' ')}
+                  onClick={() => navigate(item.path)}
                   type="button"
                 >
                   <span className="relative">

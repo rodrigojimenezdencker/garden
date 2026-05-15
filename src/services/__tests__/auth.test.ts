@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockAuth = { currentUser: { uid: 'existing-user' } };
-const signInWithPopup = vi.fn();
+const signInWithRedirect = vi.fn();
 const signInWithEmailAndPassword = vi.fn();
 const createUserWithEmailAndPassword = vi.fn();
 const firebaseSignOut = vi.fn();
@@ -20,7 +20,7 @@ vi.mock('../../lib/firebase', () => ({
 
 vi.mock('firebase/auth', () => ({
   GoogleAuthProvider: MockGoogleAuthProvider,
-  signInWithPopup: (...args: unknown[]) => signInWithPopup(...args),
+  signInWithRedirect: (...args: unknown[]) => signInWithRedirect(...args),
   signInWithEmailAndPassword: (...args: unknown[]) =>
     signInWithEmailAndPassword(...args),
   createUserWithEmailAndPassword: (...args: unknown[]) =>
@@ -32,7 +32,7 @@ vi.mock('firebase/auth', () => ({
 
 describe('auth service', () => {
   beforeEach(() => {
-    signInWithPopup.mockReset();
+    signInWithRedirect.mockReset();
     signInWithEmailAndPassword.mockReset();
     createUserWithEmailAndPassword.mockReset();
     firebaseSignOut.mockReset();
@@ -40,18 +40,14 @@ describe('auth service', () => {
     googleAuthProviderConstructor.mockReset();
   });
 
-  it('signInWithGoogle calls signInWithPopup with GoogleAuthProvider', async () => {
-    const user = { uid: 'google-user' };
-    signInWithPopup.mockResolvedValue({ user });
-
+  it('signInWithGoogle calls signInWithRedirect with GoogleAuthProvider', async () => {
     const { signInWithGoogle } = await import('../auth');
-    const result = await signInWithGoogle();
+    await signInWithGoogle();
 
-    expect(result).toBe(user);
     expect(googleAuthProviderConstructor).toHaveBeenCalledTimes(1);
-    expect(signInWithPopup).toHaveBeenCalledTimes(1);
-    expect(signInWithPopup.mock.calls[0]?.[0]).toBe(mockAuth);
-    expect(signInWithPopup.mock.calls[0]?.[1]).toBeInstanceOf(
+    expect(signInWithRedirect).toHaveBeenCalledTimes(1);
+    expect(signInWithRedirect.mock.calls[0]?.[0]).toBe(mockAuth);
+    expect(signInWithRedirect.mock.calls[0]?.[1]).toBeInstanceOf(
       MockGoogleAuthProvider,
     );
   });

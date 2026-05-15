@@ -5,15 +5,13 @@ import {
   onAuthStateChanged as firebaseOnAuthStateChanged,
   signOut as firebaseSignOut,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
-export const signInWithGoogle = async (): Promise<User> => {
+export const signInWithGoogle = async (): Promise<void> => {
   const provider = new GoogleAuthProvider();
-  const credential = await signInWithPopup(auth, provider);
-
-  return credential.user;
+  await signInWithRedirect(auth, provider);
 };
 
 export const signInWithEmail = async (
